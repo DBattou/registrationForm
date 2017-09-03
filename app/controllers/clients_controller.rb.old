@@ -26,16 +26,19 @@ class ClientsController < ApplicationController
   def create
     @client = Client.new(client_params)
     respond_to do |format|
+
       if @client.save
         format.html { redirect_to @client, notice: 'Client was successfully created.' }
         format.json { render :show, status: :created, location: @client }
-      elsif @client.is_unique? == true
+      else
+=begin
+        n = generateRandomName
+        Client.create(name: n)
+       format.html { redirect_to @client, notice: 'Invalid name. Giving a new one : ' + n }        
+=end 
         format.html { render :new }
         format.json { render json: @client.errors, status: :unprocessable_entity }
-      else
-        n = @client.generate_random_name
-        Client.create(name: n)
-        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + n }
+
       end
     end
   end
@@ -47,13 +50,9 @@ class ClientsController < ApplicationController
       if @client.update(client_params)
         format.html { redirect_to @client, notice: 'Client was successfully updated.' }
         format.json { render :show, status: :ok, location: @client }
-      elsif @client.is_unique? == true
+      else
         format.html { render :edit }
         format.json { render json: @client.errors, status: :unprocessable_entity }
-      else
-        n = @client.generate_random_name
-        Client.update(name: n)
-        format.html { redirect_to @client, notice: 'Can\'t update : ' + @client.name + ' already exists. New name : ' + n }
       end
     end
   end
