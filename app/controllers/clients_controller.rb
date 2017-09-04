@@ -26,16 +26,17 @@ class ClientsController < ApplicationController
   def create
     @client = Client.new(client_params)
     respond_to do |format|
-      if @client.save
+      if @client.is_unique? == false
+        n = @client.generate_random_name
+        @client = Client.create(name: n)
+        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + n }
+      	format.json { render :show, status: :created, location: @client }
+      elsif @client.save
         format.html { redirect_to @client, notice: 'Client was successfully created.' }
         format.json { render :show, status: :created, location: @client }
-      elsif @client.is_unique? == true
+      else
         format.html { render :new }
         format.json { render json: @client.errors, status: :unprocessable_entity }
-      else
-        n = @client.generate_random_name
-        Client.create(name: n)
-        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + n }
       end
     end
   end
@@ -44,16 +45,18 @@ class ClientsController < ApplicationController
   # PATCH/PUT /clients/1.json
   def update
     respond_to do |format|
-      if @client.update(client_params)
+      if @client.is_unique? == false
+        n = @client.generate_random_name
+        @client.name = n
+        @client.update(name: n)
+        format.html { redirect_to @client, notice: 'Cannot update. Name already exists. New name : ' + n }
+        format.json { render :show, status: :ok, location: @client }
+      elsif @client.update(client_params)
         format.html { redirect_to @client, notice: 'Client was successfully updated.' }
         format.json { render :show, status: :ok, location: @client }
-      elsif @client.is_unique? == true
+      else
         format.html { render :edit }
         format.json { render json: @client.errors, status: :unprocessable_entity }
-      else
-        n = @client.generate_random_name
-        Client.update(name: n)
-        format.html { redirect_to @client, notice: 'Can\'t update : ' + @client.name + ' already exists. New name : ' + n }
       end
     end
   end
