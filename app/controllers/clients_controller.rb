@@ -27,11 +27,15 @@ class ClientsController < ApplicationController
     @client = Client.new(client_params)
     respond_to do |format|
       if @client.is_unique? == false
-        n = @client.generate_random_name
-        @client = Client.create(name: n)
-        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + n }
+        c = FreeNick.order("RANDOM()").first
+        @client = Client.create(name: c.name)
+        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + @client.name }
       	format.json { render :show, status: :created, location: @client }
       elsif @client.save
+        if c = database.where("name = ?", nickname).first
+          puts 'Deleting ' + c.name + ' from FreeNickname database'
+          c.destroy
+        end
         format.html { redirect_to @client, notice: 'Client was successfully created.' }
         format.json { render :show, status: :created, location: @client }
       else

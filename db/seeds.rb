@@ -5,3 +5,6 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+('a'..'z').to_a.repeated_permutation(3) do |i| 
+	FreeNick.create(name: i.join)
+end
