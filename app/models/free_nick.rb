@@ -1,0 +1,2 @@
+class FreeNick < ApplicationRecord
+end

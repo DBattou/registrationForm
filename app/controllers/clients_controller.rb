@@ -27,11 +27,15 @@ class ClientsController < ApplicationController
     @client = Client.new(client_params)
     respond_to do |format|
       if @client.is_unique? == false
-        n = @client.generate_random_name
-        @client = Client.create(name: n)
-        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + n }
+        c = FreeNick.order("RANDOM()").first
+        @client = Client.create(name: c.name)
+        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + @client.name }
       	format.json { render :show, status: :created, location: @client }
       elsif @client.save
+        if c = FreeNick.where("name = ?", @client.name).first
+          puts 'Deleting ' + c.name + ' from FreeNickname database'
+          c.destroy
+        end
         format.html { redirect_to @client, notice: 'Client was successfully created.' }
         format.json { render :show, status: :created, location: @client }
       else
@@ -64,8 +68,10 @@ class ClientsController < ApplicationController
   # DELETE /clients/1
   # DELETE /clients/1.json
   def destroy
+    new_name = @client.name
     @client.destroy
     respond_to do |format|
+      FreeNick.create(name: new_name)
       format.html { redirect_to clients_url, notice: 'Client was successfully destroyed.' }
       format.json { head :no_content }
     end
