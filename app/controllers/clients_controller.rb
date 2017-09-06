@@ -26,21 +26,29 @@ class ClientsController < ApplicationController
   def create
     @client = Client.new(client_params)
     respond_to do |format|
-      if @client.is_unique? == false
-        c = FreeNick.order("RANDOM()").first
-        @client = Client.create(name: c.name)
-        format.html { redirect_to @client, notice: 'Name already exists. A new one has been chosen for you : ' + @client.name }
-      	format.json { render :show, status: :created, location: @client }
-      elsif @client.save
-        if c = FreeNick.where("name = ?", @client.name).first
-          puts 'Deleting ' + c.name + ' from FreeNickname database'
-          c.destroy
+      if FreeNick.count != 0
+        if @client.exists?
+          # Choose random name from Nickname databa
+          c = FreeNick.order("RANDOM()").first
+          # Call Create with new name to add new entry in Client database
+          @client = Client.create(name: c.name)
+          format.html { redirect_to @client, notice: 'This nickname already exists. A new one has been chosen for you : ' + @client.name }
+          format.json { render :show, status: :created, location: @client }
+        elsif @client.save
+          # If save succeed, remove new name from FreeNickname database
+          if c = FreeNick.where("name = ?", @client.name).first
+            puts 'Deleting ' + c.name + ' from FreeNickname database'
+            c.destroy
+          end
+          format.html { redirect_to @client, notice: 'Client was successfully created.' }
+          format.json { render :show, status: :created, location: @client }
+        else
+          format.html { render :new }
+          format.json { render json: @client.errors, status: :unprocessable_entity }
         end
-        format.html { redirect_to @client, notice: 'Client was successfully created.' }
-        format.json { render :show, status: :created, location: @client }
       else
-        format.html { render :new }
-        format.json { render json: @client.errors, status: :unprocessable_entity }
+        format.html { redirect_to @client, notice: 'Database is full. All the nicknames have been chosen' }
+        format.json { render :show, status: :created, location: @client }
       end
     end
   end
@@ -49,13 +57,7 @@ class ClientsController < ApplicationController
   # PATCH/PUT /clients/1.json
   def update
     respond_to do |format|
-      if @client.is_unique? == false
-        n = @client.generate_random_name
-        @client.name = n
-        @client.update(name: n)
-        format.html { redirect_to @client, notice: 'Cannot update. Name already exists. New name : ' + n }
-        format.json { render :show, status: :ok, location: @client }
-      elsif @client.update(client_params)
+      if @client.update(client_params)
         format.html { redirect_to @client, notice: 'Client was successfully updated.' }
         format.json { render :show, status: :ok, location: @client }
       else
@@ -71,6 +73,7 @@ class ClientsController < ApplicationController
     new_name = @client.name
     @client.destroy
     respond_to do |format|
+      # The deleted nickname is added in the FreeNickname database
       FreeNick.create(name: new_name)
       format.html { redirect_to clients_url, notice: 'Client was successfully destroyed.' }
       format.json { head :no_content }
